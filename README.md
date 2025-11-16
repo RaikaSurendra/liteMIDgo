@@ -14,21 +14,121 @@ A lightweight middleware that acts as a web server proxy to ServiceNow instances
 
 ## Quick Start
 
-### 1. Build the Application
+Choose your preferred deployment method:
+
+### Option 1: Local Development (Recommended for development)
 
 ```bash
-go build -o litemidgo .
+# Clone the repository
+git clone https://github.com/RaikaSurendra/liteMIDgo.git
+cd liteMIDgo
+
+# Set up environment variables
+cp .env.example .env
+# Edit .env with your ServiceNow credentials
+
+# Build and start services
+make quick-start
+
+# Check status
+make status
+
+# View logs
+make logs
+
+# Stop services when done
+make stop
 ```
 
-### 2. Configure ServiceNow Connection
+### Option 2: Docker Deployment (Recommended for production)
 
 ```bash
+# Clone the repository
+git clone https://github.com/RaikaSurendra/liteMIDgo.git
+cd liteMIDgo
+
+# Set up environment variables
+cp .env.docker .env
+# Edit .env with your ServiceNow credentials
+
+# Build and start containers
+make docker-up
+
+# Check container status
+make docker-status
+
+# View container logs
+make docker-logs
+
+# Stop containers when done
+make docker-down
+```
+
+## Prerequisites
+
+### For Local Development:
+- Go 1.24+ installed
+- Make command available
+- Terminal/command line access
+
+### For Docker Deployment:
+- Docker installed and running
+- Docker Compose available
+- Make command available (optional, but recommended)
+
+## Deployment Comparison
+
+| Feature | Local Development | Docker Deployment |
+|---------|-------------------|-------------------|
+| **Use Case** | Development, testing, debugging | Production, staging, CI/CD |
+| **Setup Time** | ~2 minutes | ~5 minutes |
+| **Resource Usage** | Lower | Higher (container overhead) |
+| **Portability** | System-specific | Cross-platform |
+| **Isolation** | Shared system | Full container isolation |
+| **Networking** | localhost:8080 | Internal Docker network |
+| **Security** | User permissions | Non-root container user |
+| **Logs** | Files in project directory | Docker volumes |
+| **Health Checks** | Manual | Automatic container health checks |
+
+## Configuration
+
+Both deployment methods use the same configuration approach:
+
+### 1. Environment Variables
+
+Copy the appropriate template and update with your credentials:
+
+**For Local Development:**
+```bash
+cp .env.example .env
+```
+
+**For Docker Deployment:**
+```bash
+cp .env.docker .env
+```
+
+Then edit `.env` with your ServiceNow credentials:
+```bash
+SERVICENOW_INSTANCE=your-instance.service-now.com
+SERVICENOW_USERNAME=your-username
+SERVICENOW_PASSWORD=your-password
+```
+
+### 2. Interactive Configuration (Optional)
+
+```bash
+# Local only
 ./litemidgo config
+
+# Test connection
+./litemidgo config test
 ```
 
 This will guide you through setting up:
 - ServiceNow instance URL
 - Authentication credentials
+- Server settings
 - Server configuration
 - Network settings
 
@@ -128,93 +228,21 @@ export SERVICENOW_PASSWORD="your-password"
 
 Environment variables take precedence over config file settings and are more secure for production deployments. The `.env` file is automatically excluded from git via `.gitignore`.
 
-## Docker Deployment
+## Running the Application
 
-### Quick Start with Docker
-
-The easiest way to run LiteMIDgo in production is using Docker:
+### Local Development Commands
 
 ```bash
-# Build and start services
-make docker-up
-
-# Check status
-make docker-status
-
-# View logs
-make docker-logs
-
-# Stop services
-make docker-down
-```
-
-### Manual Docker Commands
-
-```bash
-# Build Docker images
-docker-compose build
-
-# Start services in background
-docker-compose up -d
-
-# View logs
-docker-compose logs -f
-
-# Stop services
-docker-compose down
-
-# Clean up everything
-make docker-clean
-```
-
-### Docker Environment Setup
-
-1. Copy the environment template:
-```bash
-cp .env.docker .env
-```
-
-2. Update `.env` with your ServiceNow credentials:
-```bash
-SERVICENOW_INSTANCE=your-instance.service-now.com
-SERVICENOW_USERNAME=your-username
-SERVICENOW_PASSWORD=your-password
-LITEMIDGO_SERVER_URL=http://litemidgo-server:8080
-```
-
-3. Start the services:
-```bash
-docker-compose up -d
-```
-
-### Docker Architecture
-
-- **litemidgo-server**: Main server container with ServiceNow integration
-- **litemidgo-agent**: Metrics collection agent
-- **Health checks**: Built-in health monitoring
-- **Networking**: Internal Docker network for secure communication
-- **Volumes**: Persistent log storage
-
-## CLI Commands
-
-### Using Makefile (Recommended)
-
-The easiest way to manage LiteMIDgo services is using the Makefile:
-
-```bash
-# Show all available commands
-make help
-
 # Build both server and agent
 make build
 
 # Start both services in background
 make start
 
-# Check service status
+# Check if services are running
 make status
 
-# View logs
+# View service logs
 make logs
 
 # Stop services
@@ -223,36 +251,69 @@ make stop
 # Restart services
 make restart
 
-# Quick start (build + start)
-make quick-start
-
-# Clean up
+# Clean up build artifacts
 make clean
 ```
 
-### Manual Server Management
+### Docker Deployment Commands
+
 ```bash
-# Start the server
-./litemidgo server
+# Build Docker images
+make docker-build
 
-# Start with custom config
-./litemidgo server --config /path/to/config.yaml
+# Start services in containers
+make docker-up
 
-# Enable debug logging
-./litemidgo server --debug
+# Check container status
+make docker-status
+
+# View container logs
+make docker-logs
+
+# Stop containers
+make docker-down
+
+# Restart containers
+make docker-restart
+
+# Clean up Docker resources
+make docker-clean
 ```
 
-### Agent Management
+### Manual Commands (Without Makefile)
+
+#### Local:
 ```bash
-# Start agent daemon
+# Build and run server
+go build -o litemidgo .
+./litemidgo server-simple
+
+# Build and run agent (in separate terminal)
+cd agent
+go build -o litemidgo-agent .
 ./litemidgo-agent daemon --interval 10
-
-# Collect metrics once
-./litemidgo-agent collect
-
-# Debug mode
-./litemidgo-agent daemon --debug --interval 10
 ```
+
+#### Docker:
+```bash
+# Build and run with Docker Compose
+docker-compose build
+docker-compose up -d
+
+# View logs
+docker-compose logs -f
+
+# Stop services
+docker-compose down
+```
+
+## Docker Architecture
+
+- **litemidgo-server**: Main server container with ServiceNow integration
+- **litemidgo-agent**: Metrics collection agent
+- **Health checks**: Built-in health monitoring
+- **Networking**: Internal Docker network for secure communication
+- **Volumes**: Persistent log storage
 
 ## Use Cases
 
@@ -262,61 +323,59 @@ Deploy LiteMIDgo on a machine that has internet access (port 443) while other ma
 ### 2. ServiceNow Integration
 Send data to ServiceNow ECC Queue from applications that don't have direct ServiceNow access.
 
-### 3. Command Line Tools
-Use curl or other CLI tools to send data to ServiceNow:
+### 3. Development & Testing
+Use local deployment for development and Docker for testing in isolated environments.
+
+## API Endpoints
+
+Once the server is running, these endpoints are available:
+
+- **GET /health** - Health check endpoint
+- **GET /** - Server information  
+- **POST /proxy/ecc_queue** - Send data to ServiceNow ECC Queue
+
+## Testing
 
 ```bash
+# Test configuration and ServiceNow connection
+make test-config
+
+# Collect metrics once (local)
+make collect
+
+# Test with curl
 curl -X POST http://localhost:8080/proxy/ecc_queue \
   -H "Content-Type: application/json" \
   -d '{
-    "agent": "litemidgo",
-    "topic": "MIDServer",
-    "name": "test",
-    "payload": {"message": "Hello from LiteMIDgo"}
+    "agent": "test-agent",
+    "topic": "endpointData", 
+    "name": "test-host",
+    "source": "curl-test",
+    "payload": {"test": "data"}
   }'
 ```
 
-## Architecture
+## Troubleshooting
 
-```
-[Client Applications] -> [LiteMIDgo Server] -> [ServiceNow Instance]
-                                    |
-                               ECC Queue
-                                    |
-                           [ServiceNow Sensors/Processors]
-```
+### Common Issues
 
-## Security Considerations
+1. **Port 8080 already in use**
+   - Local: `make stop` or kill processes using port 8080
+   - Docker: `make docker-down` before starting
 
-- Use HTTPS in production environments
-- Secure the configuration file containing credentials
-- Consider implementing additional authentication for the proxy endpoints
-- Monitor access logs for unauthorized usage
+2. **ServiceNow connection failed**
+   - Verify credentials in `.env` file
+   - Check network connectivity to ServiceNow instance
+   - Run `make test-config` to test connection
 
-## Development
+3. **Agent can't connect to server**
+   - Local: Ensure server is running on localhost:8080
+   - Docker: Check both containers are healthy with `make docker-status`
 
-### Project Structure
-```
-litemidgo/
-├── main.go                 # Application entry point
-├── cmd/                    # CLI commands
-│   ├── root.go            # Root command setup
-│   ├── server.go          # Server command
-│   └── config.go          # Configuration command
-├── config/                # Configuration management
-│   ├── config.go          # Config loading and validation
-│   └── config.yaml        # Default configuration
-├── internal/              # Internal packages
-│   ├── server/            # HTTP server implementation
-│   │   └── server.go
-│   └── servicenow/        # ServiceNow client
-│       └── client.go
-└── go.mod                 # Go module definition
-```
-
-### Dependencies
-- `github.com/spf13/cobra` - CLI framework
-- `github.com/spf13/viper` - Configuration management
+4. **Environment variables not loading**
+   - Ensure `.env` file exists in project root
+   - Check file permissions
+   - Verify variable names match exactly
 
 ## License
 
