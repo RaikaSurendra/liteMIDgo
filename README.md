@@ -128,6 +128,73 @@ export SERVICENOW_PASSWORD="your-password"
 
 Environment variables take precedence over config file settings and are more secure for production deployments. The `.env` file is automatically excluded from git via `.gitignore`.
 
+## Docker Deployment
+
+### Quick Start with Docker
+
+The easiest way to run LiteMIDgo in production is using Docker:
+
+```bash
+# Build and start services
+make docker-up
+
+# Check status
+make docker-status
+
+# View logs
+make docker-logs
+
+# Stop services
+make docker-down
+```
+
+### Manual Docker Commands
+
+```bash
+# Build Docker images
+docker-compose build
+
+# Start services in background
+docker-compose up -d
+
+# View logs
+docker-compose logs -f
+
+# Stop services
+docker-compose down
+
+# Clean up everything
+make docker-clean
+```
+
+### Docker Environment Setup
+
+1. Copy the environment template:
+```bash
+cp .env.docker .env
+```
+
+2. Update `.env` with your ServiceNow credentials:
+```bash
+SERVICENOW_INSTANCE=your-instance.service-now.com
+SERVICENOW_USERNAME=your-username
+SERVICENOW_PASSWORD=your-password
+LITEMIDGO_SERVER_URL=http://litemidgo-server:8080
+```
+
+3. Start the services:
+```bash
+docker-compose up -d
+```
+
+### Docker Architecture
+
+- **litemidgo-server**: Main server container with ServiceNow integration
+- **litemidgo-agent**: Metrics collection agent
+- **Health checks**: Built-in health monitoring
+- **Networking**: Internal Docker network for secure communication
+- **Volumes**: Persistent log storage
+
 ## CLI Commands
 
 ### Using Makefile (Recommended)

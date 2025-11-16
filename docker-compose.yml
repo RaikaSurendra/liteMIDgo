@@ -1,0 +1,49 @@
+services:
+  litemidgo-server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: litemidgo-server
+    ports:
+      - "8080:8080"
+    environment:
+      - SERVICENOW_INSTANCE=${SERVICENOW_INSTANCE}
+      - SERVICENOW_USERNAME=${SERVICENOW_USERNAME}
+      - SERVICENOW_PASSWORD=${SERVICENOW_PASSWORD}
+    volumes:
+      - ./logs:/app/logs
+      - ./config:/app/config:ro
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - litemidgo-network
+
+  litemidgo-agent:
+    build:
+      context: ./agent
+      dockerfile: Dockerfile
+    container_name: litemidgo-agent
+    environment:
+      - LITEMIDGO_SERVER_URL=http://litemidgo-server:8080
+    depends_on:
+      litemidgo-server:
+        condition: service_healthy
+    volumes:
+      - ./logs:/app/logs
+    restart: unless-stopped
+    networks:
+      - litemidgo-network
+    command: ["./litemidgo-agent", "daemon", "--interval", "10"]
+
+networks:
+  litemidgo-network:
+    driver: bridge
+
+volumes:
+  litemidgo-logs:
+    driver: local

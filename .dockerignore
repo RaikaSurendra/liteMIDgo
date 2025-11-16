@@ -1,0 +1,60 @@
+# Git
+.git
+.gitignore
+
+# Documentation
+README.md
+*.md
+
+# Environment files
+.env
+.env.example
+
+# Logs
+*.log
+logs/
+agent.log
+server.log
+
+# Temporary files
+*.tmp
+*.temp
+test.txt
+
+# Build artifacts
+litemidgo
+litemidgo-*
+agent/litemidgo-agent
+agent/litemidgo-*
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Docker files
+Dockerfile*
+docker-compose*
+.dockerignore
+
+# Makefile
+Makefile
+
+# Monitoring scripts
+monitor.sh
+
+# Examples
+examples/
+
+# Backup files
+*.bak

@@ -34,6 +34,12 @@ type Payload struct {
 }
 
 func main() {
+	// Set default server URL from environment variable
+	defaultServerURL := os.Getenv("LITEMIDGO_SERVER_URL")
+	if defaultServerURL == "" {
+		defaultServerURL = "http://localhost:8080"
+	}
+
 	var rootCmd = &cobra.Command{
 		Use:   "litemidgo-agent",
 		Short: "LiteMIDgo SensuGo-compatible agent",
@@ -59,14 +65,14 @@ and sends them to LiteMIDgo server for ServiceNow integration.`,
 
 	var daemonCmd = &cobra.Command{
 		Use:   "daemon",
-		Short: "Run as daemon, sending metrics periodically",
+		Short: "Run agent as daemon",
 		Run: func(cmd *cobra.Command, args []string) {
 			runDaemon()
 		},
 	}
 
 	// Global flags
-	rootCmd.PersistentFlags().StringVarP(&serverURL, "server", "s", "http://localhost:8080", "LiteMIDgo server URL")
+	rootCmd.PersistentFlags().StringVarP(&serverURL, "server", "s", defaultServerURL, "LiteMIDgo server URL")
 	rootCmd.PersistentFlags().IntVarP(&interval, "interval", "i", 60, "Collection interval in seconds")
 	rootCmd.PersistentFlags().BoolVar(&debug, "debug", false, "Show JSON payload being sent")
 	daemonCmd.Flags().BoolVar(&once, "once", false, "Send metrics once and exit")

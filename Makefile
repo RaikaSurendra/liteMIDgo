@@ -1,6 +1,6 @@
 # LiteMIDgo Makefile
 
-.PHONY: help build server agent clean test restart stop status
+.PHONY: help build server agent clean test restart stop status docker-build docker-up docker-down docker-logs docker-clean
 
 # Default target
 help: ## Show this help message
@@ -100,6 +100,43 @@ config: ## Run interactive configuration setup
 collect: ## Collect and display system metrics (agent)
 	@echo "📊 Collecting system metrics..."
 	cd agent && ./litemidgo-agent collect
+
+# Docker targets
+docker-build: ## Build Docker images
+	@echo "🐳 Building Docker images..."
+	docker-compose build
+
+docker-up: ## Start services with Docker Compose
+	@echo "🐳 Starting LiteMIDgo services with Docker..."
+	@if [ ! -f .env ]; then \
+		echo "📋 Creating .env file from template..."; \
+		cp .env.docker .env; \
+		echo "⚠️  Please update .env with your actual ServiceNow credentials"; \
+	fi
+	docker-compose up -d
+
+docker-down: ## Stop Docker services
+	@echo "🐳 Stopping Docker services..."
+	docker-compose down
+
+docker-logs: ## Show Docker service logs
+	@echo "📋 Docker service logs:"
+	docker-compose logs -f
+
+docker-status: ## Show Docker service status
+	@echo "📊 Docker Service Status:"
+	docker-compose ps
+
+docker-clean: ## Clean Docker images and containers
+	@echo "🧹 Cleaning up Docker..."
+	docker-compose down --rmi all --volumes --remove-orphans
+	docker system prune -f
+
+docker-restart: ## Restart Docker services
+	@echo "🔄 Restarting Docker services..."
+	$(MAKE) docker-down
+	sleep 2
+	$(MAKE) docker-up
 
 # Development targets
 dev: ## Start services in development mode with auto-restart
