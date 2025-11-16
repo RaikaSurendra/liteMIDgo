@@ -12,6 +12,112 @@ A lightweight middleware that acts as a web server proxy to ServiceNow instances
 - 📊 **Health Monitoring**: Built-in health checks and connection testing
 - 🔄 **Graceful Shutdown**: Proper signal handling for production deployment
 
+## Architecture
+
+```mermaid
+graph TB
+    subgraph "Client Applications"
+        A[Web App]
+        B[Mobile App]
+        C[External System]
+        D[Monitoring Tools]
+    end
+    
+    subgraph "LiteMIDgo"
+        E[HTTP/HTTPS Server<br/>Port 8080]
+        F[Authentication Layer<br/>Basic Auth]
+        G[API Endpoints<br/>/health, /proxy/ecc_queue]
+        H[ServiceNow Client<br/>ECC Queue Integration]
+    end
+    
+    subgraph "ServiceNow Instance"
+        I[ECC Queue]
+        J[ServiceNow Platform]
+    end
+    
+    subgraph "Optional Components"
+        K[Metrics Agent<br/>System Monitoring]
+        L[Docker Container<br/>Production Deployment]
+    end
+    
+    A --> E
+    B --> E
+    C --> E
+    D --> E
+    
+    E --> F
+    F --> G
+    G --> H
+    H --> I
+    I --> J
+    
+    E -.-> K
+    L -.-> E
+    
+    style E fill:#e1f5fe
+    style H fill:#f3e5f5
+    style I fill:#e8f5e8
+    style L fill:#fff3e0
+```
+
+### Data Flow
+
+```mermaid
+sequenceDiagram
+    participant Client as Client Application
+    participant LiteMIDgo as LiteMIDgo Server
+    participant Auth as Authentication
+    participant SN as ServiceNow
+    participant ECC as ECC Queue
+    
+    Client->>LiteMIDgo: HTTP Request
+    LiteMIDgo->>Auth: Check Authentication
+    Auth-->>LiteMIDgo: Auth Result
+    
+    alt Auth Success
+        LiteMIDgo->>SN: ServiceNow API Call
+        SN->>ECC: Queue Operation
+        ECC-->>SN: Operation Result
+        SN-->>LiteMIDgo: Response
+        LiteMIDgo-->>Client: Success Response
+    else Auth Failed
+        LiteMIDgo-->>Client: 401 Unauthorized
+    end
+```
+
+### Deployment Options
+
+```mermaid
+graph LR
+    subgraph "Local Development"
+        A1[litemidgo binary]
+        A2[Local config files]
+        A3[.env credentials]
+    end
+    
+    subgraph "Docker Production"
+        B1[Docker Container]
+        B2[Docker Compose]
+        B3[Volume mounts]
+        B4[Non-root user]
+    end
+    
+    subgraph "Network Architecture"
+        C1[Client Apps]
+        C2[LiteMIDgo Proxy]
+        C3[ServiceNow Instance]
+    end
+    
+    A1 --> C2
+    B1 --> C2
+    C1 --> C2
+    C2 --> C3
+    
+    style A1 fill:#e3f2fd
+    style B1 fill:#f1f8e9
+    style C2 fill:#fff8e1
+```
+
 ## Quick Start
 
 Choose your preferred deployment method:
