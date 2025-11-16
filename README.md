@@ -130,7 +130,40 @@ Environment variables take precedence over config file settings and are more sec
 
 ## CLI Commands
 
-### Server Management
+### Using Makefile (Recommended)
+
+The easiest way to manage LiteMIDgo services is using the Makefile:
+
+```bash
+# Show all available commands
+make help
+
+# Build both server and agent
+make build
+
+# Start both services in background
+make start
+
+# Check service status
+make status
+
+# View logs
+make logs
+
+# Stop services
+make stop
+
+# Restart services
+make restart
+
+# Quick start (build + start)
+make quick-start
+
+# Clean up
+make clean
+```
+
+### Manual Server Management
 ```bash
 # Start the server
 ./litemidgo server
@@ -142,13 +175,16 @@ Environment variables take precedence over config file settings and are more sec
 ./litemidgo server --debug
 ```
 
-### Configuration
+### Agent Management
 ```bash
-# Interactive setup
-./litemidgo config
+# Start agent daemon
+./litemidgo-agent daemon --interval 10
 
-# Test connection
-./litemidgo config test
+# Collect metrics once
+./litemidgo-agent collect
+
+# Debug mode
+./litemidgo-agent daemon --debug --interval 10
 ```
 
 ## Use Cases
