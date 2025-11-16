@@ -5,23 +5,24 @@ import (
 	"strings"
 	"time"
 
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
 	"litemidgo/config"
 	"litemidgo/internal/server"
+
+	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 )
 
 type ServerDashboardModel struct {
-	server      *server.Server
-	config      *config.Config
-	status      ServerStatus
-	startTime   time.Time
-	requests    int
-	lastUpdate  time.Time
-	spinner     int
-	width       int
-	height      int
-	quitting    bool
+	server     *server.Server
+	config     *config.Config
+	status     ServerStatus
+	startTime  time.Time
+	requests   int
+	lastUpdate time.Time
+	spinner    int
+	width      int
+	height     int
+	quitting   bool
 }
 
 type ServerStatus int
@@ -45,8 +46,8 @@ func NewServerDashboardModel(cfg *config.Config) ServerDashboardModel {
 }
 
 type ServerStatusMsg struct {
-	status  ServerStatus
-	error   error
+	status   ServerStatus
+	error    error
 	requests int
 }
 
@@ -55,7 +56,6 @@ func (m ServerDashboardModel) Init() tea.Cmd {
 		return TickMsg(t)
 	})
 }
-
 
 func (m ServerDashboardModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
@@ -134,16 +134,16 @@ func startServer(srv *server.Server) tea.Cmd {
 func (m ServerDashboardModel) View() string {
 	// Styles
 	var (
-		titleStyle       = lipgloss.NewStyle().Foreground(lipgloss.Color("#FAFAFA")).Background(lipgloss.Color("#7D56F4")).Padding(0, 2).Bold(true)
-		headerStyle      = lipgloss.NewStyle().Foreground(lipgloss.Color("#FAFAFA")).Background(lipgloss.Color("#5A47E8")).Padding(0, 1)
-		successStyle     = lipgloss.NewStyle().Foreground(lipgloss.Color("#4ADE80")).Bold(true)
-		errorStyle       = lipgloss.NewStyle().Foreground(lipgloss.Color("#F87171")).Bold(true)
-		warningStyle     = lipgloss.NewStyle().Foreground(lipgloss.Color("#FBBF24")).Bold(true)
-		normalStyle      = lipgloss.NewStyle().Foreground(lipgloss.Color("#A49BF5"))
-		infoStyle        = lipgloss.NewStyle().Foreground(lipgloss.Color("#60A5FA"))
-		helpStyle        = lipgloss.NewStyle().Foreground(lipgloss.Color("#6B6B6B")).Italic(true)
-		boxStyle         = lipgloss.NewStyle().Border(lipgloss.RoundedBorder()).BorderForeground(lipgloss.Color("#5A47E8")).Padding(1)
-		spinnerChars     = []string{"⠋", "⠙", "⠹", "⠸"}
+		titleStyle   = lipgloss.NewStyle().Foreground(lipgloss.Color("#FAFAFA")).Background(lipgloss.Color("#7D56F4")).Padding(0, 2).Bold(true)
+		headerStyle  = lipgloss.NewStyle().Foreground(lipgloss.Color("#FAFAFA")).Background(lipgloss.Color("#5A47E8")).Padding(0, 1)
+		successStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("#4ADE80")).Bold(true)
+		errorStyle   = lipgloss.NewStyle().Foreground(lipgloss.Color("#F87171")).Bold(true)
+		warningStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("#FBBF24")).Bold(true)
+		normalStyle  = lipgloss.NewStyle().Foreground(lipgloss.Color("#A49BF5"))
+		infoStyle    = lipgloss.NewStyle().Foreground(lipgloss.Color("#60A5FA"))
+		helpStyle    = lipgloss.NewStyle().Foreground(lipgloss.Color("#6B6B6B")).Italic(true)
+		boxStyle     = lipgloss.NewStyle().Border(lipgloss.RoundedBorder()).BorderForeground(lipgloss.Color("#5A47E8")).Padding(1)
+		spinnerChars = []string{"⠋", "⠙", "⠹", "⠸"}
 	)
 
 	var content strings.Builder
@@ -174,7 +174,7 @@ func (m ServerDashboardModel) View() string {
 
 	// Configuration Box
 	configBox := fmt.Sprintf(
-		"Host: %s\nPort: %d\nInstance: %s",
+		"Host: %s\nPort: %s\nInstance: %s",
 		normalStyle.Render(m.config.Server.Host),
 		normalStyle.Render(fmt.Sprintf("%d", m.config.Server.Port)),
 		normalStyle.Render(m.config.ServiceNow.Instance),
@@ -185,7 +185,7 @@ func (m ServerDashboardModel) View() string {
 	// Statistics Box
 	uptime := time.Since(m.startTime)
 	statsBox := fmt.Sprintf(
-		"Uptime: %s\nRequests: %d\nLast Update: %s",
+		"Uptime: %s\nRequests: %s\nLast Update: %s",
 		normalStyle.Render(uptime.Round(time.Second).String()),
 		normalStyle.Render(fmt.Sprintf("%d", m.requests)),
 		normalStyle.Render(m.lastUpdate.Format("15:04:05")),
@@ -194,10 +194,7 @@ func (m ServerDashboardModel) View() string {
 	content.WriteString("\n\n")
 
 	// Endpoints Box
-	endpointsBox := fmt.Sprintf(
-		"GET  /health\nPOST /proxy/ecc_queue\nGET  /",
-		infoStyle.Render("GET  /health\nPOST /proxy/ecc_queue\nGET  /"),
-	)
+	endpointsBox := infoStyle.Render("GET  /health\nPOST /proxy/ecc_queue\nGET  /")
 	content.WriteString(boxStyle.Render(headerStyle.Render("Available Endpoints") + "\n" + endpointsBox))
 
 	// Help text
