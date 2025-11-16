@@ -14,8 +14,15 @@ type Config struct {
 }
 
 type ServerConfig struct {
-	Host string `mapstructure:"host"`
-	Port int    `mapstructure:"port"`
+	Host string     `mapstructure:"host"`
+	Port int        `mapstructure:"port"`
+	Auth AuthConfig `mapstructure:"auth"`
+}
+
+type AuthConfig struct {
+	Username string `mapstructure:"username"`
+	Password string `mapstructure:"password"`
+	Enabled  bool   `mapstructure:"enabled"`
 }
 
 type ServiceNowConfig struct {
@@ -46,6 +53,9 @@ func LoadConfig(configPath string) (*Config, error) {
 	// Set default values
 	viper.SetDefault("server.host", "0.0.0.0")
 	viper.SetDefault("server.port", 8080)
+	viper.SetDefault("server.auth.enabled", false)
+	viper.SetDefault("server.auth.username", "admin")
+	viper.SetDefault("server.auth.password", "change-me")
 	viper.SetDefault("servicenow.use_https", true)
 	viper.SetDefault("servicenow.timeout", 30)
 
@@ -57,6 +67,11 @@ func LoadConfig(configPath string) (*Config, error) {
 	viper.BindEnv("servicenow.instance", "SERVICENOW_INSTANCE")
 	viper.BindEnv("servicenow.username", "SERVICENOW_USERNAME")
 	viper.BindEnv("servicenow.password", "SERVICENOW_PASSWORD")
+
+	// Bind server authentication environment variables
+	viper.BindEnv("server.auth.username", "LITEMIDGO_AUTH_USERNAME")
+	viper.BindEnv("server.auth.password", "LITEMIDGO_AUTH_PASSWORD")
+	viper.BindEnv("server.auth.enabled", "LITEMIDGO_AUTH_ENABLED")
 
 	if err := viper.ReadInConfig(); err != nil {
 		if _, ok := err.(viper.ConfigFileNotFoundError); ok {

@@ -51,17 +51,26 @@ func (s *Server) Start() error {
 
 	// Setup HTTP routes
 	mux := http.NewServeMux()
-	mux.HandleFunc("/health", s.handleHealth)
-	mux.HandleFunc("/proxy/ecc_queue", s.handleECCQueueProxy)
-	mux.HandleFunc("/", s.handleDefault)
 
-	// Create HTTP server
+	// Apply security headers to all endpoints
+	mux.HandleFunc("/", s.SecurityHeaders(s.handleDefault))
+	mux.HandleFunc("/health", s.SecurityHeaders(s.handleHealth))
+
+	// Apply authentication to protected endpoints
+	if s.config.Server.Auth.Enabled {
+		mux.HandleFunc("/proxy/ecc_queue", s.SecurityHeaders(s.BasicAuth(s.handleECCQueueProxy)))
+		log.Printf("🔐 Authentication enabled for protected endpoints")
+	} else {
+		mux.HandleFunc("/proxy/ecc_queue", s.SecurityHeaders(s.handleECCQueueProxy))
+		log.Printf("⚠️  Authentication disabled - endpoints are open")
+	}
+
 	s.httpServer = &http.Server{
 		Addr:         fmt.Sprintf("%s:%d", s.config.Server.Host, s.config.Server.Port),
 		Handler:      mux,
 		ReadTimeout:  30 * time.Second,
 		WriteTimeout: 30 * time.Second,
-		IdleTimeout:  60 * time.Second,
+		IdleTimeout:  120 * time.Second,
 	}
 
 	log.Printf("🚀 Starting LiteMIDgo server on %s:%d", s.config.Server.Host, s.config.Server.Port)
@@ -111,12 +120,15 @@ func (s *Server) handleECCQueueProxy(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Limit request size to prevent DoS attacks
+	r.Body = http.MaxBytesReader(w, r.Body, 1048576) // 1MB limit
+
 	// Parse request body
 	var proxyReq ProxyRequest
 	if err := json.NewDecoder(r.Body).Decode(&proxyReq); err != nil {
 		response := ProxyResponse{
 			Success:   false,
-			Message:   fmt.Sprintf("Invalid JSON payload: %v", err),
+			Message:   "Invalid JSON payload",
 			Timestamp: time.Now().UTC().Format(time.RFC3339),
 		}
 		s.writeJSONResponse(w, http.StatusBadRequest, response)
@@ -137,6 +149,17 @@ func (s *Server) handleECCQueueProxy(w http.ResponseWriter, r *http.Request) {
 		proxyReq.Source = r.RemoteAddr
 	}
 
+	// Validate payload (basic check)
+	if proxyReq.Payload == nil {
+		response := ProxyResponse{
+			Success:   false,
+			Message:   "Payload cannot be empty",
+			Timestamp: time.Now().UTC().Format(time.RFC3339),
+		}
+		s.writeJSONResponse(w, http.StatusBadRequest, response)
+		return
+	}
+
 	// Create ECC Queue payload
 	eccPayload := &servicenow.ECCQueuePayload{
 		Agent:   proxyReq.Agent,
@@ -147,22 +170,20 @@ func (s *Server) handleECCQueueProxy(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Send to ServiceNow
-	resp, err := s.snowClient.SendToECCQueue(eccPayload)
+	_, err := s.snowClient.SendToECCQueue(eccPayload)
 	if err != nil {
 		response := ProxyResponse{
 			Success:   false,
-			Message:   fmt.Sprintf("Failed to send to ServiceNow: %v", err),
+			Message:   "Failed to send to ServiceNow",
 			Timestamp: time.Now().UTC().Format(time.RFC3339),
 		}
 		s.writeJSONResponse(w, http.StatusInternalServerError, response)
 		return
 	}
 
-	// Return success response
 	response := ProxyResponse{
 		Success:   true,
-		Message:   "Successfully queued in ServiceNow ECC Queue",
-		SysID:     resp.Result.SysID,
+		Message:   "Data sent to ServiceNow successfully",
 		Timestamp: time.Now().UTC().Format(time.RFC3339),
 	}
 	s.writeJSONResponse(w, http.StatusOK, response)
